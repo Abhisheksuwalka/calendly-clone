@@ -6,8 +6,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status, Depends
 from prisma import Prisma
 
-from core.database import get_db, prisma
-from schemas import (
+from app.core.database import get_db, prisma
+from app.schemas import (
     EventTypeCreate,
     EventTypeUpdate,
     EventTypeResponse,

@@ -1,5 +1,5 @@
 """Schemas module exports."""
-from schemas.schemas import (
+from app.schemas.schemas import (
     TimeInterval,
     UserBase,
     UserCreate,

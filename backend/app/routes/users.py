@@ -3,9 +3,9 @@ User API Router - Default user context for MVP (no auth).
 """
 from fastapi import APIRouter
 
-from core.database import prisma
-from routes.event_types import ensure_default_user
-from schemas import UserResponse
+from app.core.database import prisma
+from app.routes.event_types import ensure_default_user
+from app.schemas import UserResponse
 
 router = APIRouter(tags=["User"])
 

@@ -7,8 +7,8 @@ from calendar import monthrange
 from fastapi import APIRouter, HTTPException, Query, status
 from prisma import Prisma, Json
 
-from core.database import prisma
-from schemas import (
+from app.core.database import prisma
+from app.schemas import (
     BookingCreate,
     BookingResponse,
     BookingListResponse,
@@ -22,7 +22,7 @@ from schemas import (
     EventTypeResponse,
     MeetingNotesCreate,
 )
-from routes.event_types import ensure_default_user, DEFAULT_USER_ID, get_location_type_str
+from app.routes.event_types import ensure_default_user, DEFAULT_USER_ID, get_location_type_str
 
 
 router = APIRouter(tags=["Bookings"])

@@ -2,14 +2,15 @@
 Calendly Clone API - Main Application Entry Point
 
 FastAPI backend with Prisma ORM and PostgreSQL database.
+Imports shared code from app/ package.
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from core.config import settings
-from core.database import connect_db, disconnect_db
-from routes import event_types_router, availability_router, bookings_router
+from app.core.config import settings
+from app.core.database import connect_db, disconnect_db
+from app.routes import event_types_router, availability_router, bookings_router, users_router
 
 
 @asynccontextmanager
@@ -83,9 +84,6 @@ async def health_check():
 app.include_router(event_types_router, prefix="/api/v1")
 app.include_router(availability_router, prefix="/api/v1")
 app.include_router(bookings_router, prefix="/api/v1")
-
-# Import and include users router
-from routes.users import router as users_router
 app.include_router(users_router, prefix="/api/v1")
 
 
@@ -94,8 +92,9 @@ app.include_router(users_router, prefix="/api/v1")
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "main:app",
+        "api.main:app",
         host=settings.host,
         port=settings.port,
         reload=True,
+        reload_dirs=["app"]
     )
