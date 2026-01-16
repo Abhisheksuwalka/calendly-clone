@@ -12,7 +12,7 @@ import Contacts from "./pages/Contacts";
 import Dashboard from "./pages/Dashboard";
 import EventTypes from "./pages/EventTypes";
 import Help from "./pages/Help";
-import Index from "./pages/Index";
+import Index from "./pages/index";
 import Integrations from "./pages/Integrations";
 import NotFound from "./pages/NotFound";
 import Routing from "./pages/Routing";
