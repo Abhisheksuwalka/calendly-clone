@@ -1,0 +1,171 @@
+// Calendly Clone - Prisma Schema
+// Database: PostgreSQL
+
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ Enums ============
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+enum LocationType {
+  ZOOM
+  PHONE
+  IN_PERSON
+  GOOGLE_MEET
+  CUSTOM
+}
+
+// ============ Models ============
+
+// User/Host model - default user for MVP (no auth)
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  name      String
+  email     String   @unique
+  timezone  String   @default("Asia/Kolkata")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  eventTypes           EventType[]
+  availabilitySchedule AvailabilitySchedule[]
+  bookingsAsHost       Booking[]              @relation("HostBookings")
+
+  @@map("users")
+}
+
+// Event Type model (e.g., "30 Minute Meeting")
+model EventType {
+  id                  String       @id @default(uuid())
+  userId              String       @map("user_id")
+  name                String
+  slug                String
+  durationMinutes     Int          @default(30) @map("duration_minutes")
+  color               String       @default("#8B5CF6")
+  description         String?
+  locationType        LocationType @default(ZOOM) @map("location_type")
+  locationDetails     String?      @map("location_details")
+  bufferBeforeMinutes Int          @default(0) @map("buffer_before_minutes")
+  bufferAfterMinutes  Int          @default(0) @map("buffer_after_minutes")
+  minNoticeHours      Int          @default(4) @map("min_notice_hours")
+  maxDaysAhead        Int          @default(60) @map("max_days_ahead")
+  isActive            Boolean      @default(true) @map("is_active")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@unique([userId, slug])
+  @@index([userId, isActive])
+  @@map("event_types")
+}
+
+// Availability Schedule
+model AvailabilitySchedule {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String   @default("Working Hours")
+  timezone  String   @default("Asia/Kolkata")
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeklyHours   WeeklyHours[]
+  dateOverrides DateOverride[]
+
+  @@index([userId, isDefault])
+  @@map("availability_schedules")
+}
+
+// Weekly Hours - recurring availability
+model WeeklyHours {
+  id         String   @id @default(uuid())
+  scheduleId String   @map("schedule_id")
+  dayOfWeek  Int      @map("day_of_week") // 0=Sunday, 6=Saturday
+  isEnabled  Boolean  @default(true) @map("is_enabled")
+  intervals  Json     @default("[]") // [{start_time, end_time}]
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  schedule AvailabilitySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, dayOfWeek])
+  @@map("weekly_hours")
+}
+
+// Date Override - specific date availability
+model DateOverride {
+  id           String   @id @default(uuid())
+  scheduleId   String   @map("schedule_id")
+  specificDate DateTime @map("specific_date") @db.Date
+  intervals    Json     @default("[]") // [] = unavailable
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  schedule AvailabilitySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, specificDate])
+  @@map("date_overrides")
+}
+
+// Booking/Meeting model
+model Booking {
+  id              String        @id @default(uuid())
+  eventTypeId     String        @map("event_type_id")
+  hostId          String        @map("host_id")
+  startTime       DateTime      @map("start_time")
+  endTime         DateTime      @map("end_time")
+  inviteeTimezone String        @map("invitee_timezone")
+  inviteeName     String        @map("invitee_name")
+  inviteeEmail    String        @map("invitee_email")
+  guests          Json          @default("[]") // email array
+  status          BookingStatus @default(CONFIRMED)
+  cancelledAt     DateTime?     @map("cancelled_at")
+  cancelReason    String?       @map("cancel_reason")
+  cancelledBy     String?       @map("cancelled_by") // host, invitee, system
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  eventType EventType     @relation(fields: [eventTypeId], references: [id], onDelete: Restrict)
+  host      User          @relation("HostBookings", fields: [hostId], references: [id], onDelete: Restrict)
+  notes     MeetingNotes?
+
+  @@index([hostId, startTime, endTime, status])
+  @@index([hostId, startTime])
+  @@index([inviteeEmail])
+  @@map("bookings")
+}
+
+// Meeting Notes - Host-only private notes for bookings
+model MeetingNotes {
+  id        String   @id @default(uuid())
+  bookingId String   @unique @map("booking_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("meeting_notes")
+}

@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "pip install -r requirements.txt && python -m prisma generate",
   "builds": [
     {
       "src": "api/index.py",
