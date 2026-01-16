@@ -1,15 +1,14 @@
 """
-Minimal Vercel Serverless Function for Testing
-Vercel Python expects the app to be named 'app' (for ASGI) or 'handler' (for WSGI)
+Vercel Serverless Function Entry Point
+
+This module serves as the entry point for the FastAPI app on Vercel.
 """
-from fastapi import FastAPI
+import sys
+import os
 
-app = FastAPI()
+# Set up the path to include the backend directory
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, backend_dir)
 
-@app.get("/")
-async def root():
-    return {"status": "ok", "message": "minimal handler works"}
-
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
+# Import the FastAPI app
+from src.main import app
