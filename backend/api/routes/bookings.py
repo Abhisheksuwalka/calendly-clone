@@ -81,8 +81,8 @@ async def get_available_dates(
         if wh.isEnabled and wh.intervals:
             enabled_days[wh.dayOfWeek] = wh.intervals
     
-    # Calculate min/max booking dates
-    now = datetime.utcnow()
+    # Calculate min/max booking dates (use timezone-aware datetime)
+    now = datetime.now(dt_timezone.utc)
     min_date = now + timedelta(hours=event_type.minNoticeHours)
     max_date = now + timedelta(days=event_type.maxDaysAhead)
     
@@ -186,17 +186,30 @@ async def get_available_slots(
     if not schedule:
         return AvailableSlotsResponse(date=date, timezone=timezone or "UTC", slots=[])
     
-    # Get weekly hours for the day of week (Python Monday=0, Schema Sunday=0)
-    python_dow = slot_date.weekday()  # Monday=0
-    # Convert: Python Monday(0) -> Schema Monday(1), Python Sunday(6) -> Schema Sunday(0)
-    schema_dow = (python_dow + 1) % 7
-    
-    weekly_hours = await prisma.weeklyhours.find_first(
-        where={"scheduleId": schedule.id, "dayOfWeek": schema_dow}
+    # Check for date override first (takes priority over weekly hours)
+    date_override = await prisma.dateoverride.find_first(
+        where={"scheduleId": schedule.id, "specificDate": slot_date}
     )
     
-    if not weekly_hours or not weekly_hours.isEnabled:
-        return AvailableSlotsResponse(date=date, timezone=timezone or schedule.timezone, slots=[])
+    if date_override:
+        # Use date override intervals (empty = unavailable)
+        intervals = date_override.intervals if date_override.intervals else []
+        if not intervals:
+            return AvailableSlotsResponse(date=date, timezone=timezone or schedule.timezone, slots=[])
+    else:
+        # Get weekly hours for the day of week (Python Monday=0, Schema Sunday=0)
+        python_dow = slot_date.weekday()  # Monday=0
+        # Convert: Python Monday(0) -> Schema Monday(1), Python Sunday(6) -> Schema Sunday(0)
+        schema_dow = (python_dow + 1) % 7
+        
+        weekly_hours = await prisma.weeklyhours.find_first(
+            where={"scheduleId": schedule.id, "dayOfWeek": schema_dow}
+        )
+        
+        if not weekly_hours or not weekly_hours.isEnabled:
+            return AvailableSlotsResponse(date=date, timezone=timezone or schedule.timezone, slots=[])
+        
+        intervals = weekly_hours.intervals if weekly_hours.intervals else []
     
     # Get existing bookings for this date
     start_of_day = datetime.combine(slot_date, datetime.min.time())
@@ -213,7 +226,8 @@ async def get_available_slots(
     # Generate slots
     slots = []
     duration = timedelta(minutes=event_type.durationMinutes)
-    intervals = weekly_hours.intervals if weekly_hours.intervals else []
+    buffer_before = timedelta(minutes=event_type.bufferBeforeMinutes)
+    buffer_after = timedelta(minutes=event_type.bufferAfterMinutes)
     
     for interval in intervals:
         start_time_str = interval.get("start_time", "09:00")
@@ -228,14 +242,17 @@ async def get_available_slots(
         while current + duration <= interval_end:
             slot_end = current + duration
             
-            # Check if slot overlaps with existing booking
+            # Check if slot overlaps with existing booking (including buffer times)
             is_available = True
             for booking in existing_bookings:
-                if not (slot_end <= booking.startTime or current >= booking.endTime):
+                # Account for buffer times around existing bookings
+                booking_start_with_buffer = booking.startTime - buffer_before
+                booking_end_with_buffer = booking.endTime + buffer_after
+                if not (slot_end <= booking_start_with_buffer or current >= booking_end_with_buffer):
                     is_available = False
                     break
             
-            # Check minimum notice
+            # Check minimum notice (use timezone-aware datetime)
             now = datetime.now(dt_timezone.utc)
             min_notice = timedelta(hours=event_type.minNoticeHours)
             if current < now + min_notice:
@@ -285,20 +302,27 @@ async def create_booking(booking_data: BookingCreate):
     if conflict:
         raise HTTPException(status_code=409, detail="Time slot is no longer available")
     
-    # Create booking
-    booking = await prisma.booking.create(
-        data={
-            "eventTypeId": event_type.id,
-            "hostId": event_type.userId,
-            "startTime": booking_data.start_time,
-            "endTime": end_time,
-            "inviteeTimezone": booking_data.timezone,
-            "inviteeName": booking_data.invitee.name,
-            "inviteeEmail": booking_data.invitee.email,
-            "guests": Json(booking_data.guests),
-            "status": "CONFIRMED"
-        }
-    )
+    # Create booking (wrapped in try-except for race condition handling)
+    try:
+        booking = await prisma.booking.create(
+            data={
+                "eventTypeId": event_type.id,
+                "hostId": event_type.userId,
+                "startTime": booking_data.start_time,
+                "endTime": end_time,
+                "inviteeTimezone": booking_data.timezone,
+                "inviteeName": booking_data.invitee.name,
+                "inviteeEmail": booking_data.invitee.email,
+                "guests": Json(booking_data.guests),
+                "status": "CONFIRMED"
+            }
+        )
+    except Exception as e:
+        # Handle potential race condition where another booking was created
+        # between our conflict check and create
+        if "unique constraint" in str(e).lower() or "conflict" in str(e).lower():
+            raise HTTPException(status_code=409, detail="Time slot is no longer available")
+        raise
     
     return BookingResponse(
         id=booking.id,
@@ -329,7 +353,7 @@ async def list_meetings(
     """Get meetings for the current user."""
     user = await ensure_default_user(prisma)
     
-    now = datetime.utcnow()
+    now = datetime.now(dt_timezone.utc)
     where_clause = {"hostId": user.id}
     order_by = {}
     

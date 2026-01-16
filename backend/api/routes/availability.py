@@ -118,6 +118,18 @@ async def update_availability_schedule(update_data: AvailabilityScheduleUpdate):
     # Update weekly hours if provided
     if update_data.weekly_hours:
         for wh_update in update_data.weekly_hours:
+            # Validate intervals: ensure start_time < end_time
+            for interval in wh_update.intervals:
+                start_parts = interval.start_time.split(":")
+                end_parts = interval.end_time.split(":")
+                start_minutes = int(start_parts[0]) * 60 + int(start_parts[1])
+                end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
+                if start_minutes >= end_minutes:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Invalid interval for {DAY_NAMES[wh_update.day_of_week]}: start_time must be before end_time"
+                    )
+            
             existing = await prisma.weeklyhours.find_first(
                 where={
                     "scheduleId": schedule.id,
