@@ -1,28 +1,28 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useContextProvider } from "@/context/contextProvider";
 import {
-    Calendar,
-    CalendarDays,
-    ChevronDown,
-    ChevronRight,
-    Download,
-    Edit,
-    FileText,
-    Filter,
-    Info,
-    Loader2,
-    Repeat,
-    Video,
-    X
+  Calendar,
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Edit,
+  FileText,
+  Filter,
+  Info,
+  Loader2,
+  Repeat,
+  Video,
+  X
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -41,21 +41,49 @@ export default function ScheduledEvents() {
   const [cancelling, setCancelling] = useState(false);
   const [showBuffers, setShowBuffers] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Meeting notes state
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+  const [notesMeeting, setNotesMeeting] = useState(null);
+  const [notesContent, setNotesContent] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+  
+  // Date range and filters state
+  const [dateRangeStart, setDateRangeStart] = useState(null);
+  const [dateRangeEnd, setDateRangeEnd] = useState(null);
+  const [eventTypeFilter, setEventTypeFilter] = useState("all");
+  const [eventTypes, setEventTypes] = useState([]);
+  const [showDateRangePicker, setShowDateRangePicker] = useState(false);
 
   useEffect(() => {
     fetchMeetings();
-  }, [activeTab]);
+    fetchEventTypes();
+  }, [activeTab, dateRangeStart, dateRangeEnd]);
 
   const fetchMeetings = async () => {
     try {
       setLoading(true);
-      const data = await api.getMeetings({ status: activeTab });
+      const params = { status: activeTab === "date_range" ? "all" : activeTab };
+      if (activeTab === "date_range" && dateRangeStart && dateRangeEnd) {
+        params.start_date = dateRangeStart;
+        params.end_date = dateRangeEnd;
+      }
+      const data = await api.getMeetings(params);
       setMeetings(data.meetings || data.bookings || []);
     } catch (err) {
       toast.error("Failed to load meetings");
       setMeetings([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchEventTypes = async () => {
+    try {
+      const data = await api.getEventTypes();
+      setEventTypes(data.event_types || []);
+    } catch (err) {
+      console.warn("Could not load event types for filter");
     }
   };
 
@@ -79,6 +107,33 @@ export default function ScheduledEvents() {
       toast.error(err.message || "Failed to cancel meeting");
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const openNotesModal = (meeting) => {
+    setNotesMeeting(meeting);
+    setNotesContent(meeting.notes?.content || "");
+    setNotesModalOpen(true);
+  };
+
+  const closeNotesModal = () => {
+    setNotesModalOpen(false);
+    setNotesMeeting(null);
+    setNotesContent("");
+  };
+
+  const saveNotes = async () => {
+    if (!notesMeeting) return;
+    try {
+      setSavingNotes(true);
+      await api.updateMeetingNotes(notesMeeting.id, notesContent);
+      toast.success("Notes saved");
+      closeNotesModal();
+      fetchMeetings();
+    } catch (err) {
+      toast.error(err.message || "Failed to save notes");
+    } finally {
+      setSavingNotes(false);
     }
   };
 
@@ -122,7 +177,13 @@ export default function ScheduledEvents() {
     return Object.entries(groups).sort(([a], [b]) => new Date(a) - new Date(b));
   };
 
-  const groupedMeetings = groupMeetingsByDate(meetings);
+  // Apply client-side filter for event types
+  const filteredMeetings = useMemo(() => {
+    if (eventTypeFilter === "all") return meetings;
+    return meetings.filter(m => m.event_type_id === eventTypeFilter || m.event_type?.id === eventTypeFilter);
+  }, [meetings, eventTypeFilter]);
+
+  const groupedMeetings = groupMeetingsByDate(filteredMeetings);
 
   if (loading) {
     return (
@@ -179,15 +240,24 @@ export default function ScheduledEvents() {
           <div className="bg-white rounded-lg border border-[#E5E7EB] overflow-hidden shadow-sm">
             {/* Tabs Row */}
             <div className="flex items-center justify-between px-4 border-b border-[#E5E7EB]">
-              <div className="flex">
+              <div className="flex relative">
                 {[
                   { id: "upcoming", label: "Upcoming" },
                   { id: "past", label: "Past" },
-                  { id: "date_range", label: "Date Range", hasChevron: true },
+                  { id: "date_range", label: dateRangeStart && dateRangeEnd ? `${dateRangeStart} - ${dateRangeEnd}` : "Date Range", hasChevron: true },
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      if (tab.id === "date_range") {
+                        setShowDateRangePicker(!showDateRangePicker);
+                      } else {
+                        setShowDateRangePicker(false);
+                        setDateRangeStart(null);
+                        setDateRangeEnd(null);
+                      }
+                      setActiveTab(tab.id);
+                    }}
                     className={`py-3 px-4 text-[14px] font-medium border-b-2 -mb-[1px] transition-colors flex items-center gap-1 ${
                       activeTab === tab.id
                         ? "text-[#0069FF] border-[#0069FF]"
@@ -195,15 +265,72 @@ export default function ScheduledEvents() {
                     }`}
                   >
                     {tab.label}
-                    {tab.hasChevron && <ChevronDown className="w-4 h-4" />}
+                    {tab.hasChevron && <ChevronDown className={`w-4 h-4 transition-transform ${showDateRangePicker ? "rotate-180" : ""}`} />}
                   </button>
                 ))}
+                
+                {/* Date Range Picker Popover */}
+                {showDateRangePicker && (
+                  <div className="absolute top-full left-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-50 p-4">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <label className="block text-[12px] text-[#6B7280] mb-1">Start Date</label>
+                        <input
+                          type="date"
+                          value={dateRangeStart || ""}
+                          onChange={(e) => setDateRangeStart(e.target.value)}
+                          className="border border-[#D1D5DB] rounded-md px-3 py-2 text-[14px]"
+                        />
+                      </div>
+                      <span className="text-[#6B7280] mt-4">to</span>
+                      <div>
+                        <label className="block text-[12px] text-[#6B7280] mb-1">End Date</label>
+                        <input
+                          type="date"
+                          value={dateRangeEnd || ""}
+                          onChange={(e) => setDateRangeEnd(e.target.value)}
+                          className="border border-[#D1D5DB] rounded-md px-3 py-2 text-[14px]"
+                        />
+                      </div>
+                      <button
+                        onClick={() => setShowDateRangePicker(false)}
+                        className="mt-4 px-4 py-2 bg-[#0069FF] text-white rounded-md text-[13px] font-medium hover:bg-[#0055CC]"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Export & Filter */}
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
+                  onClick={() => {
+                    if (meetings.length === 0) {
+                      toast.error("No meetings to export");
+                      return;
+                    }
+                    const headers = ["Date", "Time", "Event Type", "Invitee Name", "Invitee Email", "Status"];
+                    const rows = meetings.map(m => [
+                      m.start_time?.split("T")[0] || "",
+                      m.start_time?.split("T")[1]?.slice(0, 5) || "",
+                      m.event_type?.name || "",
+                      m.invitee_name || m.invitee?.name || "",
+                      m.invitee_email || m.invitee?.email || "",
+                      m.status || ""
+                    ]);
+                    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `meetings-${format(new Date(), "yyyy-MM-dd")}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success("Meetings exported successfully!");
+                  }}
                   className="h-8 px-3 border-[#E5E7EB] text-[#1a1a1a] text-[13px] rounded-md gap-1.5 font-medium"
                 >
                   <Download className="w-4 h-4" />
@@ -225,14 +352,27 @@ export default function ScheduledEvents() {
 
             {/* Filter Bar (Expandable) */}
             {showFilters && (
-              <div className="px-4 py-3 bg-[#FAFAFA] border-b border-[#E5E7EB] flex items-center gap-4 flex-wrap">
+              <div className="px-4 py-3 bg-[#FAFAFA] border-b border-[#E5E7EB] flex items-center gap-6 flex-wrap">
+                {/* Event Types Filter - Functional */}
+                <div className="flex flex-col gap-0.5 relative">
+                  <span className="text-[11px] text-[#6B7280] font-medium">Event Types</span>
+                  <select
+                    value={eventTypeFilter}
+                    onChange={(e) => setEventTypeFilter(e.target.value)}
+                    className="appearance-none bg-transparent text-[13px] text-[#0069FF] font-medium cursor-pointer pr-4 outline-none"
+                  >
+                    <option value="all">All Event Types</option>
+                    {eventTypes.map((et) => (
+                      <option key={et.id} value={et.id}>{et.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3 h-3 absolute right-0 top-5 text-[#0069FF] pointer-events-none" />
+                </div>
+
+                {/* Static filters (placeholder) */}
                 {[
-                  { label: "Teams", value: "All Teams" },
-                  { label: "Host", value: "Host" },
-                  { label: "Event Types", value: "All Event Types" },
+                  { label: "Host", value: "All Hosts" },
                   { label: "Status", value: "Active Events" },
-                  { label: "Tracking ID", value: "All IDs" },
-                  { label: "Invitee Emails", value: "All Invitee Emails" },
                 ].map((filter) => (
                   <div key={filter.label} className="flex flex-col gap-0.5">
                     <span className="text-[11px] text-[#6B7280] font-medium">{filter.label}</span>
@@ -242,7 +382,11 @@ export default function ScheduledEvents() {
                     </button>
                   </div>
                 ))}
-                <button className="ml-auto text-[13px] text-[#6B7280] hover:text-[#0069FF]">
+
+                <button 
+                  onClick={() => setEventTypeFilter("all")}
+                  className="ml-auto text-[13px] text-[#6B7280] hover:text-[#0069FF]"
+                >
                   Clear all filters
                 </button>
               </div>
@@ -464,10 +608,18 @@ export default function ScheduledEvents() {
 
                                     {/* Meeting Notes */}
                                     <div>
-                                      <button className="flex items-center gap-2 text-[13px] text-[#0069FF] hover:underline">
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); openNotesModal(meeting); }}
+                                        className="flex items-center gap-2 text-[13px] text-[#0069FF] hover:underline"
+                                      >
                                         <FileText className="w-4 h-4" />
-                                        Add meeting notes
+                                        {meeting.notes?.content ? "Edit meeting notes" : "Add meeting notes"}
                                       </button>
+                                      {meeting.notes?.content && (
+                                        <p className="text-[12px] text-[#6B7280] mt-1 line-clamp-2">
+                                          {meeting.notes.content}
+                                        </p>
+                                      )}
                                     </div>
 
                                     {/* Created Date */}
@@ -577,6 +729,59 @@ export default function ScheduledEvents() {
             >
               {cancelling && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Cancel event
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Notes Modal */}
+      <Dialog open={notesModalOpen} onOpenChange={setNotesModalOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="text-[18px] font-semibold text-[#1a1a1a]">
+              Meeting Notes
+            </DialogTitle>
+          </DialogHeader>
+
+          {notesMeeting && (
+            <div className="bg-[#F3F4F6] rounded-lg p-4 mb-4">
+              <p className="text-[14px] font-medium text-[#1a1a1a]">
+                {notesMeeting.event_type?.name || "Meeting"}
+              </p>
+              <p className="text-[13px] text-[#6B7280]">
+                with {notesMeeting.invitee?.name || "Guest"}
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-[14px] font-medium text-[#1a1a1a] mb-2">
+              Notes
+            </label>
+            <Textarea
+              value={notesContent}
+              onChange={(e) => setNotesContent(e.target.value)}
+              placeholder="Add notes about this meeting..."
+              rows={5}
+              className="border-[#E5E7EB] focus:border-[#0069FF] focus:ring-[#0069FF]"
+            />
+          </div>
+
+          <div className="flex gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={closeNotesModal}
+              className="flex-1 rounded-full h-10 border-[#E5E7EB] text-[#1a1a1a] font-medium"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveNotes}
+              disabled={savingNotes}
+              className="flex-1 rounded-full h-10 bg-[#0069FF] hover:bg-[#0055CC] font-medium"
+            >
+              {savingNotes && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Save Notes
             </Button>
           </div>
         </DialogContent>
