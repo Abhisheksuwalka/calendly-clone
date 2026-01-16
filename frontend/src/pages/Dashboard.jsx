@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import {
-  Calendar,
-  Clock,
-  Users,
-  ArrowUpRight,
-  Copy,
-  Plus,
-  TrendingUp,
-  Loader2,
-} from "lucide-react";
 import { useContextProvider } from "@/context/contextProvider";
+import {
+    ArrowUpRight,
+    Calendar,
+    Clock,
+    Copy,
+    Loader2,
+    Plus,
+    TrendingUp,
+    Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -108,7 +108,7 @@ export default function Dashboard() {
   const getColorClass = (color) => colorMap[color] || "bg-primary";
 
   const copyBookingLink = () => {
-    const link = `${window.location.origin}/book/abhishek`;
+    const link = `${window.location.origin}/book/${user?.username || "user"}`;
     navigator.clipboard.writeText(link);
     toast.success("Booking link copied!");
   };
@@ -250,7 +250,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground mt-1">Update your working hours</p>
                 </div>
               </Link>
-              <Link to={`/book/abhishek`} className="block">
+              <Link to={`/book/${user?.username || "user"}`} className="block">
                 <div className="p-4 rounded-lg border border-border hover:border-primary hover:shadow-card-hover transition-all duration-200 cursor-pointer group">
                   <Calendar className="w-5 h-5 text-primary mb-3 group-hover:scale-110 transition-transform" />
                   <p className="font-medium text-foreground">Preview Page</p>
