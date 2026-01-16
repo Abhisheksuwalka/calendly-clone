@@ -1,0 +1,598 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 14% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 10%;
+
+    --primary: 213 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 14% 10%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 213 100% 96%;
+    --accent-foreground: 213 100% 50%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 213 100% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 220 14% 98%;
+    --sidebar-foreground: 220 14% 10%;
+    --sidebar-primary: 213 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 213 100% 96%;
+    --sidebar-accent-foreground: 213 100% 50%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 213 100% 50%;
+
+    /* Custom gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(213 100% 50%) 0%, hsl(230 100% 60%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(213 100% 98%) 0%, hsl(0 0% 100%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 99%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 14% 10% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(220 14% 10% / 0.1), 0 2px 4px -2px hsl(220 14% 10% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(220 14% 10% / 0.1), 0 4px 6px -4px hsl(220 14% 10% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(220 14% 10% / 0.1), 0 8px 10px -6px hsl(220 14% 10% / 0.1);
+    --shadow-card: 0 1px 3px 0 hsl(220 14% 10% / 0.1), 0 1px 2px -1px hsl(220 14% 10% / 0.1);
+    --shadow-card-hover: 0 10px 40px -10px hsl(213 100% 50% / 0.2);
+  }
+
+  .dark {
+    --background: 220 14% 8%;
+    --foreground: 220 14% 96%;
+
+    --card: 220 14% 12%;
+    --card-foreground: 220 14% 96%;
+
+    --popover: 220 14% 12%;
+    --popover-foreground: 220 14% 96%;
+
+    --primary: 213 100% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 18%;
+    --secondary-foreground: 220 14% 96%;
+
+    --muted: 220 14% 18%;
+    --muted-foreground: 220 9% 60%;
+
+    --accent: 213 100% 15%;
+    --accent-foreground: 213 100% 60%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 14% 20%;
+    --input: 220 14% 20%;
+    --ring: 213 100% 55%;
+
+    --sidebar-background: 220 14% 10%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 213 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 213 100% 15%;
+    --sidebar-accent-foreground: 213 100% 60%;
+    --sidebar-border: 220 14% 20%;
+    --sidebar-ring: 213 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Calendly Cool Grey Design System */
+  :root {
+    /* Primary Colors */
+    --calendly-navy: #0a2540;
+    --calendly-slate: #476788;
+    --calendly-blue: #0069ff;
+    --calendly-blue-hover: #0055cc;
+    
+    /* Borders & Backgrounds - Ice Blue Theme */
+    --calendly-border: #d4e0ed;
+    --calendly-border-hover: #0069ff;
+    --calendly-bg-page: #f8f9fa;
+    --calendly-bg-card: #ffffff;
+    --calendly-bg-hover: #f0f6ff;
+    --calendly-bg-active: #e6f2ff;
+    
+    /* Avatar Colors */
+    --calendly-avatar-bg: #e7edf6;
+    --calendly-avatar-text: #004eba;
+    
+    /* Placeholder & Muted */
+    --calendly-placeholder: #a6bbd1;
+    --calendly-muted: #999999;
+    
+    /* Shadows */
+    --calendly-shadow-sm: 0 1px 2px rgba(0,0,0,0.02);
+    --calendly-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --calendly-shadow-focus: 0 0 0 2px rgba(0, 105, 255, 0.2);
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ==========================================
+   AVAILABILITY PAGE - CALENDLY DESIGN SYSTEM
+   ========================================== */
+
+/* Tab underline animation */
+.availability-tab {
+  position: relative;
+  transition: color 200ms ease;
+}
+
+.availability-tab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: transparent;
+  transition: background-color 200ms ease;
+}
+
+.availability-tab.active::after {
+  background-color: #0069FF;
+}
+
+/* Day circle indicator */
+.day-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  transition: background-color 150ms ease;
+}
+
+.day-circle.active {
+  background-color: #0069FF;
+}
+
+.day-circle.inactive {
+  background-color: #9CA3AF;
+}
+
+/* Time input Calendly styling */
+.time-input {
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1F2937;
+  min-width: 100px;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+  outline: none;
+  background: white;
+}
+
+.time-input:hover {
+  border-color: #9CA3AF;
+}
+
+.time-input:focus {
+  border-color: #0069FF;
+  box-shadow: 0 0 0 3px rgba(0, 105, 255, 0.1);
+}
+
+/* Action icon buttons */
+.action-icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: transparent;
+  color: #6B7280;
+  transition: all 150ms ease;
+  cursor: pointer;
+  border: none;
+}
+
+.action-icon-btn:hover {
+  background-color: #F3F4F6;
+  color: #1F2937;
+}
+
+.action-icon-btn.delete:hover {
+  color: #EF4444;
+}
+
+/* View toggle segmented control */
+.view-toggle {
+  display: flex;
+  padding: 4px;
+  background-color: #F3F4F6;
+  border-radius: 8px;
+  gap: 2px;
+}
+
+.view-toggle-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B7280;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 150ms ease;
+}
+
+.view-toggle-btn.active {
+  background-color: white;
+  color: #1F2937;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Schedule dropdown */
+.schedule-dropdown {
+  animation: dropdownSlide 200ms ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Checkbox animation */
+.checkbox-calendly {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #D1D5DB;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  position: relative;
+}
+
+.checkbox-calendly.checked {
+  background-color: #0069FF;
+  border-color: #0069FF;
+}
+
+.checkbox-calendly.checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Day row hover effect */
+.day-row {
+  transition: background-color 150ms ease;
+}
+
+.day-row:hover {
+  background-color: #F9FAFB;
+}
+
+/* Save button states */
+.save-btn {
+  transition: all 200ms ease;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.save-btn.success {
+  background-color: #10B981;
+}
+
+/* Calendar view styles */
+.calendar-cell {
+  aspect-ratio: 1;
+  padding: 8px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.calendar-cell:hover {
+  background-color: #F9FAFB;
+}
+
+.calendar-cell.selected {
+  background-color: #E6F2FF;
+  border-color: #0069FF;
+  border-width: 2px;
+}
+
+.calendar-cell.today {
+  border-color: #0069FF;
+  border-width: 2px;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn 200ms ease-out;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalSlideUp 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Timezone selector background */
+.timezone-section {
+  margin-top: 24px;
+  padding: 16px 20px;
+  background-color: #F9FAFB;
+  border-radius: 8px;
+}
