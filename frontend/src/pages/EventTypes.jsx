@@ -212,7 +212,7 @@ export default function EventTypes() {
       });
       setEventTypes([...eventTypes, result]);
       toast.success("Event type created!");
-      setIsCreateModalOpen(false);
+      setIsCreatingNew(false);
       setNewEventType({
         name: "New Meeting",
         description: "",
@@ -828,6 +828,121 @@ export default function EventTypes() {
 
             {/* Panel Content - Accordion */}
             <div className="flex-1 overflow-y-auto">
+              {/* Name & Description Section */}
+              <div style={{ borderBottom: `1px solid ${colors.border}` }}>
+                <button
+                  onClick={() => toggleSection('name')}
+                  className="flex items-center justify-between w-full px-5 py-4 hover:bg-[#fafafa] transition-colors"
+                >
+                  <span 
+                    className="text-[15px] font-semibold"
+                    style={{ color: colors.navy }}
+                  >
+                    Name & Description
+                  </span>
+                  {expandedSection === 'name' ? (
+                    <ChevronUp className="w-5 h-5" style={{ color: colors.slate }} />
+                  ) : (
+                    <ChevronDown className="w-5 h-5" style={{ color: colors.slate }} />
+                  )}
+                </button>
+                {expandedSection !== 'name' && (
+                  <div className="px-5 pb-4 -mt-2">
+                    <p className="text-[14px]" style={{ color: colors.slate }}>
+                      {editFormData.name}
+                    </p>
+                  </div>
+                )}
+                {expandedSection === 'name' && (
+                  <div className="px-5 pb-5 space-y-4">
+                    <div>
+                      <label className="block text-[13px] font-medium mb-2" style={{ color: colors.navy }}>
+                        Event name
+                      </label>
+                      <input
+                        type="text"
+                        value={editFormData.name}
+                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                        className="w-full h-10 px-3 rounded-lg border text-[14px] outline-none transition-colors"
+                        style={{ borderColor: colors.border, color: colors.navy }}
+                        onFocus={(e) => e.target.style.borderColor = colors.blue}
+                        onBlur={(e) => e.target.style.borderColor = colors.border}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[13px] font-medium mb-2" style={{ color: colors.navy }}>
+                        Description
+                      </label>
+                      <textarea
+                        value={editFormData.description}
+                        onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                        rows={3}
+                        placeholder="Add a description for invitees..."
+                        className="w-full px-3 py-2 rounded-lg border text-[14px] outline-none transition-colors resize-none"
+                        style={{ borderColor: colors.border, color: colors.navy }}
+                        onFocus={(e) => e.target.style.borderColor = colors.blue}
+                        onBlur={(e) => e.target.style.borderColor = colors.border}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Color Section */}
+              <div style={{ borderBottom: `1px solid ${colors.border}` }}>
+                <button
+                  onClick={() => toggleSection('color')}
+                  className="flex items-center justify-between w-full px-5 py-4 hover:bg-[#fafafa] transition-colors"
+                >
+                  <span 
+                    className="text-[15px] font-semibold"
+                    style={{ color: colors.navy }}
+                  >
+                    Event Color
+                  </span>
+                  {expandedSection === 'color' ? (
+                    <ChevronUp className="w-5 h-5" style={{ color: colors.slate }} />
+                  ) : (
+                    <ChevronDown className="w-5 h-5" style={{ color: colors.slate }} />
+                  )}
+                </button>
+                {expandedSection !== 'color' && (
+                  <div className="px-5 pb-4 -mt-2">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-5 h-5 rounded-full"
+                        style={{ backgroundColor: editFormData.color }}
+                      />
+                      <span className="text-[14px]" style={{ color: colors.slate }}>
+                        {colorOptions.find(c => c.value === editFormData.color)?.label || "Custom"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {expandedSection === 'color' && (
+                  <div className="px-5 pb-5">
+                    <div className="flex gap-3 flex-wrap">
+                      {colorOptions.map((color) => (
+                        <button
+                          key={color.value}
+                          onClick={() => setEditFormData({ ...editFormData, color: color.value })}
+                          className="w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center"
+                          style={{
+                            backgroundColor: color.value,
+                            borderColor: editFormData.color === color.value ? colors.navy : 'transparent',
+                          }}
+                          title={color.label}
+                        >
+                          {editFormData.color === color.value && (
+                            <span className="text-white text-lg font-bold">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Duration Section */}
               <div style={{ borderBottom: `1px solid ${colors.border}` }}>
                 <button
@@ -1182,6 +1297,61 @@ export default function EventTypes() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                )}
+              </div>
+
+              {/* Color Section */}
+              <div style={{ borderBottom: `1px solid ${colors.border}` }}>
+                <button
+                  onClick={() => toggleSection('color')}
+                  className="flex items-center justify-between w-full px-5 py-4 hover:bg-[#fafafa] transition-colors"
+                >
+                  <span 
+                    className="text-[15px] font-semibold"
+                    style={{ color: colors.navy }}
+                  >
+                    Event Color
+                  </span>
+                  {expandedSection === 'color' ? (
+                    <ChevronUp className="w-5 h-5" style={{ color: colors.slate }} />
+                  ) : (
+                    <ChevronDown className="w-5 h-5" style={{ color: colors.slate }} />
+                  )}
+                </button>
+                {expandedSection !== 'color' && (
+                  <div className="px-5 pb-4 -mt-2">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-5 h-5 rounded-full"
+                        style={{ backgroundColor: newEventType.color }}
+                      />
+                      <span className="text-[14px]" style={{ color: colors.slate }}>
+                        {colorOptions.find(c => c.value === newEventType.color)?.label || "Orange"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {expandedSection === 'color' && (
+                  <div className="px-5 pb-5">
+                    <div className="flex gap-3 flex-wrap">
+                      {colorOptions.map((color) => (
+                        <button
+                          key={color.value}
+                          onClick={() => setNewEventType({ ...newEventType, color: color.value })}
+                          className="w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center"
+                          style={{
+                            backgroundColor: color.value,
+                            borderColor: newEventType.color === color.value ? colors.navy : 'transparent',
+                          }}
+                          title={color.label}
+                        >
+                          {newEventType.color === color.value && (
+                            <span className="text-white text-lg font-bold">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
