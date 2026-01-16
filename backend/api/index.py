@@ -22,11 +22,18 @@ def generate_prisma_client():
     except RuntimeError as e:
         if "hasn't been generated yet" in str(e):
             print("🔧 Generating Prisma client...")
+            # Set up environment with proper PATH for prisma-client-py
+            env = os.environ.copy()
+            import site
+            user_base = site.getuserbase()
+            env["PATH"] = f"{user_base}/bin:{env.get('PATH', '')}"
+            
             result = subprocess.run(
                 [sys.executable, "-m", "prisma", "generate"],
                 capture_output=True,
                 text=True,
-                cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                env=env
             )
             if result.returncode == 0:
                 print("✅ Prisma client generated successfully")
