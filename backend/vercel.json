@@ -1,23 +1,8 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "src/main.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
+      "source": "/(.*)",
+      "destination": "/api/index.py"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "src/main.py"
-    }
-  ],
-  "build": {
-    "env": {
-      "PRISMA_PY_DEBUG_GENERATOR": "1"
-    }
-  }
+  ]
 }
