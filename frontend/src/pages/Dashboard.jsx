@@ -2,14 +2,14 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { useContextProvider } from "@/context/contextProvider";
 import {
-    ArrowUpRight,
-    Calendar,
-    Clock,
-    Copy,
-    Loader2,
-    Plus,
-    TrendingUp,
-    Users,
+  ArrowUpRight,
+  Calendar,
+  Clock,
+  Copy,
+  Loader2,
+  Plus,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -19,7 +19,6 @@ export default function Dashboard() {
   const { api } = useContextProvider();
   const [stats, setStats] = useState([
     { label: "Total Meetings", value: "0", change: "+0%", icon: Calendar },
-    { label: "Hours Saved", value: "0", change: "+0%", icon: Clock },
     { label: "Event Types", value: "0", change: "+0%", icon: Users },
   ]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -73,7 +72,6 @@ export default function Dashboard() {
       // Update stats
       setStats([
         { label: "Total Meetings", value: String(meetingsData.pagination?.total || meetings.length), change: "+12%", icon: Calendar },
-        { label: "Hours Saved", value: String(Math.round((meetingsData.pagination?.total || meetings.length) * 0.5)), change: "+8%", icon: Clock },
         { label: "Event Types", value: String(eventTypesCount), change: "+0%", icon: Users },
       ]);
     } catch (err) {
@@ -125,7 +123,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="w-[95%] max-w-7xl mx-auto px-6 py-6 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -151,7 +149,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 gap-6 max-w-2xl">
           {stats.map((stat) => (
             <div
               key={stat.label}

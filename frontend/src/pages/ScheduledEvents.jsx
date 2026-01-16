@@ -13,6 +13,7 @@ import {
   Calendar,
   CalendarDays,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Download,
   Edit,
@@ -20,13 +21,262 @@ import {
   Filter,
   Info,
   Loader2,
+  Play,
   Repeat,
   Video,
   X
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+
+// ============ Date Range Picker Component ============
+function DateRangePicker({ 
+  startDate, 
+  endDate, 
+  onRangeSelect, 
+  onClose, 
+  onApply 
+}) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const [viewDate, setViewDate] = useState(new Date(today));
+  const [selectionStart, setSelectionStart] = useState(startDate);
+  const [selectionEnd, setSelectionEnd] = useState(endDate);
+  const [hoverDate, setHoverDate] = useState(null);
+
+  // Get month data
+  const getMonthData = (year, month) => {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay(); // 0 = Sunday
+    
+    const days = [];
+    // Add empty cells for days before the first of month
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push(null);
+    }
+    // Add actual days
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    return days;
+  };
+
+  const formatMonthYear = (date) => {
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  };
+
+  const formatDateString = (date) => {
+    if (!date) return null;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
+  const handleDateClick = (date) => {
+    if (!date) return;
+    
+    if (!selectionStart || (selectionStart && selectionEnd)) {
+      // Start new selection
+      setSelectionStart(date);
+      setSelectionEnd(null);
+    } else {
+      // Complete the selection
+      if (date < selectionStart) {
+        setSelectionEnd(selectionStart);
+        setSelectionStart(date);
+      } else {
+        setSelectionEnd(date);
+      }
+    }
+  };
+
+  const handlePreset = (preset) => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    let start, end;
+
+    switch (preset) {
+      case "today":
+        start = end = new Date(now);
+        break;
+      case "this_week":
+        start = new Date(now);
+        start.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+        end = new Date(start);
+        end.setDate(start.getDate() + 6); // End of week (Saturday)
+        break;
+      case "this_month":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        break;
+      case "all_time":
+        start = null;
+        end = null;
+        break;
+    }
+    setSelectionStart(start);
+    setSelectionEnd(end);
+  };
+
+  const handleApply = () => {
+    onRangeSelect(formatDateString(selectionStart), formatDateString(selectionEnd));
+    onApply();
+  };
+
+  const isInRange = (date) => {
+    if (!date || !selectionStart) return false;
+    const endToCheck = selectionEnd || hoverDate;
+    if (!endToCheck) return false;
+    
+    const start = selectionStart < endToCheck ? selectionStart : endToCheck;
+    const end = selectionStart < endToCheck ? endToCheck : selectionStart;
+    return date >= start && date <= end;
+  };
+
+  const isRangeStart = (date) => {
+    if (!date || !selectionStart) return false;
+    return date.getTime() === selectionStart.getTime();
+  };
+
+  const isRangeEnd = (date) => {
+    if (!date || !selectionEnd) return false;
+    return date.getTime() === selectionEnd.getTime();
+  };
+
+  const isToday = (date) => {
+    if (!date) return false;
+    return date.getTime() === today.getTime();
+  };
+
+  const prevMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  };
+
+  const month1Year = viewDate.getFullYear();
+  const month1 = viewDate.getMonth();
+  const month2Year = month1 === 11 ? month1Year + 1 : month1Year;
+  const month2 = (month1 + 1) % 12;
+
+  const month1Days = getMonthData(month1Year, month1);
+  const month2Days = getMonthData(month2Year, month2);
+
+  const dayHeaders = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+  const renderCalendar = (days, year, month) => (
+    <div className="w-[280px]">
+      <div className="text-center font-semibold text-[15px] text-[#1a1a1a] mb-3">
+        {formatMonthYear(new Date(year, month, 1))}
+      </div>
+      <div className="grid grid-cols-7 gap-0 mb-1">
+        {dayHeaders.map((day) => (
+          <div key={day} className="text-[11px] font-medium text-[#6B7280] text-center py-1">
+            {day}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-0">
+        {days.map((date, idx) => {
+          if (!date) {
+            return <div key={`empty-${idx}`} className="h-9" />;
+          }
+          
+          const inRange = isInRange(date);
+          const isStart = isRangeStart(date);
+          const isEnd = isRangeEnd(date);
+          const isTodayDate = isToday(date);
+          
+          return (
+            <div
+              key={idx}
+              onClick={() => handleDateClick(date)}
+              onMouseEnter={() => selectionStart && !selectionEnd && setHoverDate(date)}
+              onMouseLeave={() => setHoverDate(null)}
+              className={`h-9 flex items-center justify-center text-[14px] cursor-pointer relative transition-colors
+                ${inRange && !isStart && !isEnd ? "bg-[#E8F4FF]" : ""}
+                ${isStart ? "bg-[#0069FF] text-white rounded-l-full" : ""}
+                ${isEnd ? "bg-[#0069FF] text-white rounded-r-full" : ""}
+                ${isStart && isEnd ? "rounded-full" : ""}
+                ${!inRange && !isStart && !isEnd ? "hover:bg-[#F3F4F6] rounded-full" : ""}
+                ${isTodayDate && !isStart && !isEnd ? "font-bold text-[#0069FF]" : ""}
+              `}
+            >
+              {date.getDate()}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="absolute top-full left-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-xl z-50 p-5" style={{ minWidth: '620px' }}>
+      {/* Preset buttons */}
+      <div className="flex items-center gap-4 mb-5">
+        {[
+          { id: "today", label: "Today" },
+          { id: "this_week", label: "This week" },
+          { id: "this_month", label: "This month" },
+          { id: "all_time", label: "All time" },
+        ].map((preset) => (
+          <button
+            key={preset.id}
+            onClick={() => handlePreset(preset.id)}
+            className="text-[14px] text-[#0069FF] font-medium hover:underline"
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Calendar navigation and months */}
+      <div className="flex items-start gap-8">
+        {/* Left arrow */}
+        <button 
+          onClick={prevMonth}
+          className="p-1 hover:bg-[#F3F4F6] rounded mt-1"
+        >
+          <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
+        </button>
+
+        {/* Month 1 */}
+        {renderCalendar(month1Days, month1Year, month1)}
+
+        {/* Month 2 */}
+        {renderCalendar(month2Days, month2Year, month2)}
+
+        {/* Right arrow */}
+        <button 
+          onClick={nextMonth}
+          className="p-1 hover:bg-[#F3F4F6] rounded mt-1"
+        >
+          <ChevronRight className="w-5 h-5 text-[#6B7280]" />
+        </button>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-[#E5E7EB]">
+        <button
+          onClick={onClose}
+          className="text-[14px] text-[#6B7280] font-medium hover:text-[#1a1a1a] px-4 py-2"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleApply}
+          className="px-6 py-2 bg-[#0069FF] text-white rounded-full text-[14px] font-medium hover:bg-[#0055CC]"
+        >
+          Apply
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ScheduledEvents() {
   const { api, timeZone, user } = useContextProvider();
@@ -55,20 +305,17 @@ export default function ScheduledEvents() {
   const [eventTypes, setEventTypes] = useState([]);
   const [showDateRangePicker, setShowDateRangePicker] = useState(false);
 
+  // Fetch all meetings and filter client-side for better UX
   useEffect(() => {
     fetchMeetings();
     fetchEventTypes();
-  }, [activeTab, dateRangeStart, dateRangeEnd]);
+  }, []);
 
   const fetchMeetings = async () => {
     try {
       setLoading(true);
-      const params = { status: activeTab === "date_range" ? "all" : activeTab };
-      if (activeTab === "date_range" && dateRangeStart && dateRangeEnd) {
-        params.start_date = dateRangeStart;
-        params.end_date = dateRangeEnd;
-      }
-      const data = await api.getMeetings(params);
+      // Always fetch all meetings and filter client-side for better UX
+      const data = await api.getMeetings({ status: "all" });
       setMeetings(data.meetings || data.bookings || []);
     } catch (err) {
       toast.error("Failed to load meetings");
@@ -142,12 +389,12 @@ export default function ScheduledEvents() {
     const today = new Date();
     const isToday = date.toDateString() === today.toDateString();
     
-    const formatted = date.toLocaleDateString("en-US", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    // Format: "Friday, 16 January 2026" (day before month, matching Calendly)
+    const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
+    const day = date.getDate();
+    const month = date.toLocaleDateString("en-US", { month: "long" });
+    const year = date.getFullYear();
+    const formatted = `${weekday}, ${day} ${month} ${year}`;
     
     return { text: formatted, isToday };
   };
@@ -156,11 +403,15 @@ export default function ScheduledEvents() {
     const formatTime = (isoString) => {
       if (!isoString) return "";
       const date = new Date(isoString);
-      return date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }).toLowerCase().replace(' ', '');
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      const hour12 = hours % 12 || 12;
+      // Format: "10 am" or "10:30 am" (space before am/pm, matching Calendly)
+      if (minutes === 0) {
+        return `${hour12} ${ampm}`;
+      }
+      return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
     };
     return `${formatTime(startTime)} – ${formatTime(endTime)}`;
   };
@@ -177,11 +428,52 @@ export default function ScheduledEvents() {
     return Object.entries(groups).sort(([a], [b]) => new Date(a) - new Date(b));
   };
 
-  // Apply client-side filter for event types
+  // Apply client-side filtering for tabs and event types
   const filteredMeetings = useMemo(() => {
-    if (eventTypeFilter === "all") return meetings;
-    return meetings.filter(m => m.event_type_id === eventTypeFilter || m.event_type?.id === eventTypeFilter);
-  }, [meetings, eventTypeFilter]);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    let result = [...meetings];
+    
+    // Filter by tab (Upcoming / Past / Date Range)
+    if (activeTab === "upcoming") {
+      result = result.filter(m => {
+        const meetingDate = new Date(m.start_time);
+        return meetingDate >= now && m.status?.toLowerCase() !== "cancelled";
+      });
+      // Sort ascending for upcoming
+      result.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    } else if (activeTab === "past") {
+      result = result.filter(m => {
+        const meetingDate = new Date(m.start_time);
+        return meetingDate < now;
+      });
+      // Sort descending for past
+      result.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+    } else if (activeTab === "date_range" && dateRangeStart && dateRangeEnd) {
+      const startDate = new Date(dateRangeStart);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(dateRangeEnd);
+      endDate.setHours(23, 59, 59, 999);
+      
+      result = result.filter(m => {
+        const meetingDate = new Date(m.start_time);
+        return meetingDate >= startDate && meetingDate <= endDate;
+      });
+      // Sort ascending for date range
+      result.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    } else if (activeTab === "date_range" && !dateRangeStart && !dateRangeEnd) {
+      // "All time" - show everything, sorted by date descending
+      result.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+    }
+    
+    // Filter by event type
+    if (eventTypeFilter !== "all") {
+      result = result.filter(m => m.event_type_id === eventTypeFilter || m.event_type?.id === eventTypeFilter);
+    }
+    
+    return result;
+  }, [meetings, activeTab, dateRangeStart, dateRangeEnd, eventTypeFilter]);
 
   const groupedMeetings = groupMeetingsByDate(filteredMeetings);
 
@@ -199,7 +491,7 @@ export default function ScheduledEvents() {
     <DashboardLayout>
       <div className="bg-[#F8F9FA] min-h-screen">
         {/* Header */}
-        <div className="max-w-5xl mx-auto px-6 pt-6">
+        <div className="w-[95%] max-w-7xl mx-auto px-6 pt-6">
           <div className="flex items-center gap-2 mb-5">
             <h1 className="text-[24px] font-semibold text-[#1a1a1a]">Meetings</h1>
             <button className="p-1 hover:bg-gray-100 rounded-full">
@@ -232,7 +524,7 @@ export default function ScheduledEvents() {
             
             {/* Event Count */}
             <span className="text-[13px] text-[#6B7280]">
-              Displaying {meetings.length} of {meetings.length} Events
+              Displaying {filteredMeetings.length} of {meetings.length} Events
             </span>
           </div>
 
@@ -271,35 +563,16 @@ export default function ScheduledEvents() {
                 
                 {/* Date Range Picker Popover */}
                 {showDateRangePicker && (
-                  <div className="absolute top-full left-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-50 p-4">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <label className="block text-[12px] text-[#6B7280] mb-1">Start Date</label>
-                        <input
-                          type="date"
-                          value={dateRangeStart || ""}
-                          onChange={(e) => setDateRangeStart(e.target.value)}
-                          className="border border-[#D1D5DB] rounded-md px-3 py-2 text-[14px]"
-                        />
-                      </div>
-                      <span className="text-[#6B7280] mt-4">to</span>
-                      <div>
-                        <label className="block text-[12px] text-[#6B7280] mb-1">End Date</label>
-                        <input
-                          type="date"
-                          value={dateRangeEnd || ""}
-                          onChange={(e) => setDateRangeEnd(e.target.value)}
-                          className="border border-[#D1D5DB] rounded-md px-3 py-2 text-[14px]"
-                        />
-                      </div>
-                      <button
-                        onClick={() => setShowDateRangePicker(false)}
-                        className="mt-4 px-4 py-2 bg-[#0069FF] text-white rounded-md text-[13px] font-medium hover:bg-[#0055CC]"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </div>
+                  <DateRangePicker
+                    startDate={dateRangeStart ? new Date(dateRangeStart) : null}
+                    endDate={dateRangeEnd ? new Date(dateRangeEnd) : null}
+                    onRangeSelect={(start, end) => {
+                      setDateRangeStart(start);
+                      setDateRangeEnd(end);
+                    }}
+                    onClose={() => setShowDateRangePicker(false)}
+                    onApply={() => setShowDateRangePicker(false)}
+                  />
                 )}
               </div>
 
@@ -326,7 +599,7 @@ export default function ScheduledEvents() {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url;
-                    a.download = `meetings-${format(new Date(), "yyyy-MM-dd")}.csv`;
+                    a.download = `meetings-${new Date().toISOString().split('T')[0]}.csv`;
                     a.click();
                     URL.revokeObjectURL(url);
                     toast.success("Meetings exported successfully!");
@@ -402,11 +675,11 @@ export default function ScheduledEvents() {
                     <div key={date}>
                       {/* Date Header */}
                       <div className="px-4 py-3 bg-white border-b border-[#E5E7EB]">
-                        <span className="text-[13px] font-semibold text-[#1a1a1a]">
+                        <span className="text-[13px] font-medium text-[#1a1a1a]">
                           {dateText}
                         </span>
                         {isToday && (
-                          <span className="ml-2 text-[11px] font-bold text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded">
+                          <span className="ml-3 text-[13px] font-bold text-[#1a1a1a]">
                             TODAY
                           </span>
                         )}
@@ -428,39 +701,42 @@ export default function ScheduledEvents() {
                             {/* Meeting Row */}
                             <div className="flex items-center px-4 py-4 hover:bg-[#FAFAFA] transition-colors cursor-pointer"
                                  onClick={() => setExpandedMeeting(isExpanded ? null : meeting.id)}>
-                              {/* Color Dot */}
+                              {/* Color Dot - Small like Calendly */}
                               <div
-                                className="w-3 h-3 rounded-full flex-shrink-0 mr-4"
+                                className="w-2 h-2 rounded-full flex-shrink-0 mr-4"
                                 style={{ backgroundColor: meeting.event_type?.color || "#8B5CF6" }}
                               />
 
                               {/* Time */}
-                              <div className="w-[130px] flex-shrink-0">
+                              <div className="w-[140px] flex-shrink-0">
                                 <span className="text-[14px] text-[#1a1a1a]">
                                   {formatTimeRange(meeting.start_time, meeting.end_time)}
                                 </span>
                               </div>
 
-                              {/* Title & Event Type */}
+                              {/* Invitee Name & Event Type - Calendly style */}
                               <div className="flex-1 min-w-0">
-                                <span className="text-[14px] font-medium text-[#1a1a1a]">
+                                <span className="text-[14px] text-[#1a1a1a] mr-2">
                                   {meeting.invitee?.name || "Guest"}
                                 </span>
-                                <span className="text-[14px] text-[#6B7280] ml-3">
-                                  Event type <span className="text-[#0069FF]">{meeting.event_type?.name || "Meeting"}</span>
+                                <span className="text-[14px] text-[#6B7280]">
+                                  Event type{' '}
+                                  <span className="font-semibold text-[#1a1a1a]">
+                                    {meeting.event_type?.name || "Meeting"}
+                                  </span>
                                 </span>
                               </div>
 
                               {/* Host Info */}
-                              <div className="flex-shrink-0 text-[13px] text-[#6B7280] mr-4">
+                              <div className="flex-shrink-0 text-[13px] text-[#6B7280] mr-6">
                                 1 host | 0 non-hosts
                               </div>
 
-                              {/* Details Button */}
+                              {/* Details Button - Play icon like Calendly */}
                               <button
-                                className="flex items-center gap-1 text-[13px] text-[#6B7280] hover:text-[#0069FF] transition-colors"
+                                className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-[#1a1a1a] transition-colors"
                               >
-                                <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                                <Play className={`w-2.5 h-2.5 fill-current transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                                 Details
                               </button>
                             </div>
@@ -662,12 +938,18 @@ export default function ScheduledEvents() {
                   </div>
                 </div>
                 <h3 className="text-[18px] font-semibold text-[#1a1a1a] mb-2">
-                  No {activeTab === "upcoming" ? "Upcoming" : "Past"} Events
+                  No {activeTab === "upcoming" ? "Upcoming" : activeTab === "past" ? "Past" : ""} Events
+                  {activeTab === "date_range" && dateRangeStart && dateRangeEnd && " in Selected Range"}
+                  {activeTab === "date_range" && !dateRangeStart && !dateRangeEnd && "Events Yet"}
                 </h3>
                 <p className="text-[14px] text-[#6B7280] max-w-sm mx-auto">
                   {activeTab === "upcoming"
                     ? "When you get booked, your upcoming meetings will appear here."
-                    : "Your completed and cancelled meetings will appear here."}
+                    : activeTab === "past"
+                    ? "Your completed and cancelled meetings will appear here."
+                    : dateRangeStart && dateRangeEnd
+                    ? `No events found between ${dateRangeStart} and ${dateRangeEnd}.`
+                    : "Select a date range or click 'All time' to view all events."}
                 </p>
               </div>
             )}

@@ -44,9 +44,43 @@ backend/
 - pip (Python package manager)
 - PostgreSQL database (or Neon cloud account)
 
-## Getting Started
+---
 
-### 1. Clone and Navigate
+## 🚀 Quick Start (TL;DR)
+
+```bash
+# 1. Navigate to backend
+cd backend
+
+# 2. Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements-production.txt
+
+# 4. Setup environment
+cp .env.example .env
+# Edit .env and add your DATABASE_URL
+
+# 5. Setup Prisma (CRITICAL - Don't skip!)
+prisma generate    # Generates the Prisma client
+prisma db push     # Creates database tables
+
+# 6. Seed database (optional but recommended)
+python -m scripts.seed
+
+# 7. Run the server
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Server will be running at:** http://localhost:8000
+
+---
+
+## Detailed Setup Guide
+
+### 1. Navigate to Backend Directory
 
 ```bash
 cd backend
@@ -55,20 +89,26 @@ cd backend
 ### 2. Create Virtual Environment
 
 ```bash
-# Create virtual environment
-python3 -m venv venv
+# Create virtual environment (use .venv as folder name)
+python3 -m venv .venv
 
 # Activate virtual environment
 # On macOS/Linux:
-source venv/bin/activate
+source .venv/bin/activate
 
 # On Windows:
-.\venv\Scripts\activate
+.\.venv\Scripts\activate
 ```
+
+> **Note:** Your terminal prompt should now show `(.venv)` prefix, indicating the virtual environment is active.
 
 ### 3. Install Dependencies
 
 ```bash
+# For production (recommended)
+pip install -r requirements-production.txt
+
+# OR for development
 pip install -r requirements.txt
 ```
 
@@ -80,7 +120,7 @@ Create a `.env` file in the backend directory:
 cp .env.example .env
 ```
 
-Configure the following environment variables:
+Configure the following environment variables in `.env`:
 
 ```env
 # Database (Neon PostgreSQL)
@@ -90,16 +130,18 @@ DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 # DATABASE_URL=postgresql://neondb_owner:password@ep-xxx.aws.neon.tech/neondb?sslmode=require
 ```
 
-### 5. Database Setup (Prisma)
+### 5. Database Setup (Prisma) ⚠️ CRITICAL STEP
+
+> **⚠️ IMPORTANT:** You MUST run `prisma generate` before starting the server. This generates the Python Prisma client from your schema. Skipping this step will cause a `RuntimeError: The Client hasn't been generated yet` error.
 
 ```bash
-# Generate Prisma client
+# Step 1: Generate Prisma client (REQUIRED)
 prisma generate
 
-# Push schema to database (creates tables)
+# Step 2: Push schema to database (creates tables)
 prisma db push
 
-# Seed the database with sample data
+# Step 3: Seed the database with sample data (optional but recommended)
 python -m scripts.seed
 ```
 
@@ -108,12 +150,16 @@ python -m scripts.seed
 ```bash
 # Development mode with auto-reload
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+
+# OR using Python directly
+python -m src.main
 ```
 
 The API will be available at:
-- **API**: http://localhost:8000
+- **API Base URL**: http://localhost:8000
 - **Interactive Docs (Swagger)**: http://localhost:8000/docs
 - **Alternative Docs (ReDoc)**: http://localhost:8000/redoc
+- **Health Check**: http://localhost:8000/health
 
 ## API Endpoints (25 Total)
 

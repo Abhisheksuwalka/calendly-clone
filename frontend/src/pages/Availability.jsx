@@ -607,7 +607,7 @@ export default function Availability() {
       <div className="bg-[#F8F9FA] min-h-screen">
         {/* Header */}
         <div className="bg-white border-b border-[#E5E7EB]">
-          <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className="w-[95%] max-w-7xl mx-auto px-6 py-6">
             <h1 className="text-[28px] font-bold text-[#1F2937]">Availability</h1>
 
             {/* Tabs */}
@@ -634,7 +634,7 @@ export default function Availability() {
         </div>
 
         {/* Content */}
-        <div className="max-w-4xl mx-auto px-6 py-6">
+        <div className="w-[95%] max-w-7xl mx-auto px-6 py-6">
           {activeTab === "schedules" && (
             <div className="space-y-6">
               {/* Schedule Header */}

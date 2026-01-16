@@ -38,7 +38,7 @@ import {
   Video,
   X
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -123,6 +123,7 @@ export default function EventTypes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [showAllEvents, setShowAllEvents] = useState(false);
   
   // Edit panel state
   const [editingEvent, setEditingEvent] = useState(null);
@@ -385,9 +386,18 @@ export default function EventTypes() {
     return `${hasWeekdaysOnly ? "Weekdays" : "Custom"}, ${formatTime(firstInterval.start_time)} - ${formatTime(firstInterval.end_time)}`;
   };
 
-  const filteredEventTypes = eventTypes.filter((et) =>
-    et.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Memoize filtered and displayed event types for performance
+  const { displayedEventTypes, hiddenCount, totalFiltered } = useMemo(() => {
+    const filtered = eventTypes.filter((et) =>
+      et.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    return {
+      displayedEventTypes: showAllEvents ? filtered : filtered.slice(0, 5),
+      hiddenCount: Math.max(0, filtered.length - 5),
+      totalFiltered: filtered.length,
+    };
+  }, [eventTypes, searchQuery, showAllEvents]);
 
   if (loading) {
     return (
@@ -404,7 +414,7 @@ export default function EventTypes() {
       <div className="min-h-screen flex" style={{ backgroundColor: colors.bgPage }}>
         {/* Main Content */}
         <div className={`flex-1 transition-all duration-300 ${(editingEvent || isCreatingNew) ? 'mr-[400px]' : ''}`}>
-          <div className="w-[75%] max-w-5xl mx-auto px-6 pt-2">
+          <div className={`mx-auto px-6 pt-2 transition-all duration-300 ${(editingEvent || isCreatingNew) ? 'w-[75%] max-w-5xl' : 'w-[95%] max-w-7xl'}`}>
             
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
@@ -584,13 +594,13 @@ export default function EventTypes() {
             </div>
 
             {/* Event Type Cards - Individual cards with gaps */}
-            {filteredEventTypes.length === 0 ? (
+            {totalFiltered === 0 ? (
               <div className="p-12 text-center">
                 <p style={{ color: colors.slate }}>No event types found</p>
               </div>
             ) : (
               <div className="space-y-3">
-                  {filteredEventTypes.map((eventType) => (
+                  {displayedEventTypes.map((eventType) => (
                     <div
                       key={eventType.id}
                       className="flex items-center relative cursor-pointer transition-all rounded-lg overflow-hidden"
@@ -752,15 +762,25 @@ export default function EventTypes() {
                 </div>
               )}
 
-            {/* Show more link */}
-            {filteredEventTypes.length > 5 && (
+            {/* Show more/less link */}
+            {totalFiltered > 5 && (
               <div className="mt-4 text-center">
                 <button 
+                  onClick={() => setShowAllEvents(!showAllEvents)}
                   className="flex items-center gap-1 text-[14px] mx-auto hover:underline"
                   style={{ color: colors.blue }}
                 >
-                  <ChevronDown className="w-4 h-4" />
-                  Show more event types ({filteredEventTypes.length - 5})
+                  {showAllEvents ? (
+                    <>
+                      <ChevronUp className="w-4 h-4" />
+                      Show less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4" />
+                      Show more event types ({hiddenCount})
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -1455,6 +1475,43 @@ export default function EventTypes() {
                     <p className="text-[14px]" style={{ color: colors.slate }}>
                       Weekdays, 9 am - 5 pm
                     </p>
+                  </div>
+                )}
+                {expandedSection === 'availability' && (
+                  <div className="px-5 pb-5">
+                    <div className="mb-4">
+                      <p className="text-[14px] font-semibold mb-2" style={{ color: colors.navy }}>Date-range</p>
+                      <p className="text-[14px]" style={{ color: colors.slate }}>
+                        Invitees can schedule <span style={{ color: colors.blue }}>60 days</span> into the future
+                      </p>
+                    </div>
+                    <div 
+                      className="p-4 rounded-lg"
+                      style={{ border: `1px solid ${colors.border}` }}
+                    >
+                      <p className="text-[14px] font-semibold mb-3" style={{ color: colors.navy }}>Weekly hours</p>
+                      <div className="space-y-2">
+                        {[0,1,2,3,4,5,6].map((i) => (
+                          <div key={i} className="flex items-center gap-3">
+                            <span 
+                              className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold"
+                              style={{
+                                backgroundColor: i === 0 || i === 6 ? colors.border : colors.blue,
+                                color: i === 0 || i === 6 ? colors.muted : 'white',
+                              }}
+                            >
+                              {dayNames[i]}
+                            </span>
+                            <span 
+                              className="text-[14px]"
+                              style={{ color: i === 0 || i === 6 ? colors.muted : colors.navy }}
+                            >
+                              {i === 0 || i === 6 ? "Unavailable" : "9:00am - 5:00pm"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

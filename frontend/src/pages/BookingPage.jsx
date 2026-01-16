@@ -13,9 +13,8 @@ import {
     Loader2,
     MapPin,
     Phone,
-    Play,
     Users,
-    Video,
+    Video
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -258,83 +257,94 @@ export default function BookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#0069FF]" />
+      <div className="min-h-screen bg-gradient-to-br from-[#F0F4F8] to-[#E8EEF4] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-[#0069FF] mx-auto mb-4" />
+          <p className="text-[14px] text-[#6B7280]">Loading scheduling page...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-4">
-      {/* Event Selection - Calendly exact style */}
+    <div className="min-h-screen bg-gradient-to-br from-[#F0F4F8] to-[#E8EEF4] flex items-center justify-center p-4">
+      {/* Event Selection - Calendly Premium Style */}
       {step === "select-event" && (
-        <div className="w-full max-w-[640px]">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden relative">
+        <div className="w-full max-w-[680px]">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden relative border border-[#E8EEF4]">
             {/* Angled "Powered by Calendly" ribbon */}
             <div 
-              className="absolute top-0 right-0 overflow-hidden w-[120px] h-[120px] pointer-events-none"
+              className="absolute top-0 right-0 overflow-hidden w-[130px] h-[130px] pointer-events-none z-10"
             >
               <div 
-                className="absolute transform rotate-45 bg-[#4B5563] text-white text-[10px] font-medium py-1.5 text-center"
+                className="absolute transform rotate-45 bg-gradient-to-r from-[#4B5563] to-[#374151] text-white text-[9px] font-semibold py-1.5 text-center shadow-md"
                 style={{
-                  width: '180px',
-                  right: '-50px',
-                  top: '25px',
+                  width: '200px',
+                  right: '-55px',
+                  top: '28px',
                 }}
               >
                 POWERED BY <span className="font-bold">Calendly</span>
               </div>
             </div>
 
-            {/* Header - Name only, no avatar */}
-            <div className="px-8 pt-12 pb-6 text-center">
-              <h1 className="text-[20px] font-semibold text-[#1A1A1A] mb-3">
+            {/* Header with Avatar */}
+            <div className="px-10 pt-14 pb-8 text-center">
+              {/* User Avatar */}
+              <div className="w-20 h-20 rounded-full mx-auto mb-5 bg-gradient-to-br from-[#0069FF] to-[#00D4FF] flex items-center justify-center text-white text-[28px] font-bold shadow-lg">
+                {(hostInfo?.name || username)?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              
+              <h1 className="text-[22px] font-bold text-[#1A1A1A] mb-3">
                 {hostInfo?.name || username}
               </h1>
-              <p className="text-[14px] text-[#6B7280] leading-relaxed">
+              <p className="text-[15px] text-[#6B7280] leading-relaxed max-w-md mx-auto">
                 Welcome to my scheduling page. Please follow the instructions to add an event to my calendar.
               </p>
             </div>
 
-            {/* Event Types - 2 column grid with dividers */}
-            <div className="px-8 pb-2">
+            {/* Event Types - 2 column grid with elegant dividers */}
+            <div className="px-10 pb-4">
               {getEventRows().map((row, rowIndex) => (
                 <div key={rowIndex}>
                   {/* Horizontal divider */}
-                  <div className="border-t border-[#E5E7EB]" />
+                  <div className="border-t border-[#E8EEF4]" />
                   
                   <div className="grid grid-cols-2">
                     {row.map((event, colIndex) => (
                       <button
                         key={event.id}
                         onClick={() => handleEventSelect(event)}
-                        className={`flex items-center gap-3 py-5 px-2 hover:bg-[#F9FAFB] transition-colors group ${
-                          colIndex === 0 && row.length === 2 ? 'border-r border-[#E5E7EB] pr-4' : 'pl-4'
+                        className={`flex items-center gap-4 py-5 px-3 hover:bg-gradient-to-r hover:from-[#F8FAFC] hover:to-[#F0F7FF] transition-all duration-200 group ${
+                          colIndex === 0 && row.length === 2 ? 'border-r border-[#E8EEF4] pr-5' : 'pl-5'
                         } ${row.length === 1 ? 'col-span-2' : ''}`}
                       >
-                        {/* Color dot */}
+                        {/* Color dot with glow effect */}
                         <div
-                          className="w-4 h-4 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: event.color || '#8B5CF6' }}
+                          className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
+                          style={{ 
+                            backgroundColor: event.color || '#8B5CF6',
+                            boxShadow: `0 0 8px ${event.color || '#8B5CF6'}40`
+                          }}
                         />
                         {/* Event name */}
-                        <span className="flex-1 text-[15px] font-medium text-[#1A1A1A] text-left">
+                        <span className="flex-1 text-[15px] font-semibold text-[#1A1A1A] text-left group-hover:text-[#0069FF] transition-colors">
                           {event.name}
                         </span>
-                        {/* Arrow */}
-                        <Play className="w-3 h-3 text-[#9CA3AF] fill-[#9CA3AF] flex-shrink-0" />
+                        {/* Arrow with animation */}
+                        <ChevronRight className="w-4 h-4 text-[#C4C4C4] group-hover:text-[#0069FF] group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </button>
                     ))}
                   </div>
                 </div>
               ))}
               {/* Final divider */}
-              {eventTypes.length > 0 && <div className="border-t border-[#E5E7EB]" />}
+              {eventTypes.length > 0 && <div className="border-t border-[#E8EEF4]" />}
             </div>
 
             {/* Footer - Cookie settings */}
-            <div className="px-8 py-5">
-              <button className="text-[13px] text-[#0069FF] hover:underline">
+            <div className="px-10 py-6">
+              <button className="text-[13px] text-[#0069FF] hover:text-[#0052CC] font-medium hover:underline transition-colors">
                 Cookie settings
               </button>
             </div>
@@ -344,49 +354,57 @@ export default function BookingPage() {
 
       {/* Date & Time Selection */}
       {step === "select-time" && selectedEvent && (
-        <div className="w-full max-w-4xl">
-          <div className="bg-white rounded-xl shadow-lg border border-[#E5E7EB] overflow-hidden">
+        <div className="w-full max-w-5xl">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#E8EEF4] overflow-hidden">
             <div className="grid lg:grid-cols-3">
               {/* Left Panel - Event Info */}
-              <div className="p-6 border-r border-[#E5E7EB] bg-[#FAFAFA]">
+              <div className="p-8 border-r border-[#E8EEF4] bg-gradient-to-b from-[#F8FAFC] to-[#F1F5F9]">
                 <button
                   onClick={goBack}
-                  className="w-9 h-9 rounded-full bg-[#0069FF] text-white flex items-center justify-center mb-6 hover:bg-[#0052CC] transition-colors"
+                  className="w-10 h-10 rounded-full bg-gradient-to-r from-[#0069FF] to-[#0052CC] text-white flex items-center justify-center mb-8 hover:shadow-lg hover:scale-105 transition-all"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-5 h-5" />
                 </button>
 
-                <p className="text-[13px] text-[#6B7280] mb-1">
+                <p className="text-[13px] text-[#6B7280] mb-2 font-medium">
                   {hostInfo?.name || username}
                 </p>
-                <h2 className="text-[24px] font-bold text-[#1F2937] mb-5">
+                <h2 className="text-[26px] font-bold text-[#1F2937] mb-6 leading-tight">
                   {selectedEvent.name}
                 </h2>
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-[14px] text-[#6B7280]">
-                    <Clock className="w-5 h-5 text-[#9CA3AF]" />
-                    <span>{selectedEvent.duration_minutes} min</span>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-[14px] text-[#374151]">
+                    <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-[#6B7280]" />
+                    </div>
+                    <span className="font-medium">{selectedEvent.duration_minutes} min</span>
                   </div>
                   {selectedEvent.location_type && (
-                    <div className="flex items-center gap-3 text-[14px] text-[#6B7280]">
-                      {(() => {
-                        const Icon = getLocationIcon(selectedEvent.location_type);
-                        return <Icon className="w-5 h-5 text-[#9CA3AF]" />;
-                      })()}
-                      <span>Web conferencing details provided upon confirmation</span>
+                    <div className="flex items-start gap-3 text-[14px] text-[#374151]">
+                      <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                        {(() => {
+                          const Icon = getLocationIcon(selectedEvent.location_type);
+                          return <Icon className="w-4 h-4 text-[#6B7280]" />;
+                        })()}
+                      </div>
+                      <span className="leading-relaxed">Web conferencing details provided upon confirmation</span>
                     </div>
                   )}
                   {selectedDate && selectedTime && (
-                    <div className="flex items-center gap-3 text-[14px] text-[#6B7280] pt-3 border-t border-[#E5E7EB] mt-3">
-                      <Calendar className="w-5 h-5 text-[#9CA3AF]" />
-                      <span>
+                    <div className="flex items-center gap-3 text-[14px] text-[#374151] pt-4 border-t border-[#E8EEF4] mt-4">
+                      <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
+                        <Calendar className="w-4 h-4 text-[#6B7280]" />
+                      </div>
+                      <span className="font-medium">
                         {selectedTime.start_time} - {selectedTime.end_time}, {formatShortDate(selectedDate)}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-3 text-[14px] text-[#6B7280]">
-                    <Globe className="w-5 h-5 text-[#9CA3AF]" />
+                  <div className="flex items-center gap-3 text-[14px] text-[#374151]">
+                    <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
+                      <Globe className="w-4 h-4 text-[#6B7280]" />
+                    </div>
                     <span>{timeZone}</span>
                   </div>
                 </div>
@@ -513,48 +531,58 @@ export default function BookingPage() {
               </div>
 
               {/* Right Panel - Time Slots */}
-              <div className="p-6 bg-[#FAFAFA] max-h-[500px] overflow-y-auto">
+              <div className="p-6 bg-gradient-to-b from-[#F8FAFC] to-[#F1F5F9] max-h-[520px] overflow-y-auto">
                 {selectedDate ? (
                   <>
-                    <h4 className="text-[16px] font-semibold text-[#1F2937] mb-4">
+                    <h4 className="text-[15px] font-bold text-[#1F2937] mb-5">
                       {formatShortDate(selectedDate)}
                     </h4>
                     {timeSlots.length > 0 ? (
-                      <div className="space-y-2">
+                      <div className="space-y-2.5">
                         {timeSlots.map((slot, i) => (
                           <button
                             key={i}
                             onClick={() => handleTimeSelect(slot)}
-                            className={`w-full rounded-lg border-2 text-[14px] font-medium transition-all overflow-hidden ${
+                            className={`w-full rounded-xl border-2 text-[14px] font-semibold transition-all overflow-hidden shadow-sm hover:shadow-md ${
                               selectedTime === slot
-                                ? "border-[#0069FF]"
-                                : "border-[#0069FF] text-[#0069FF] hover:bg-[#0069FF] hover:text-white"
+                                ? "border-[#0069FF] shadow-md"
+                                : "border-[#0069FF] text-[#0069FF] bg-white hover:bg-gradient-to-r hover:from-[#0069FF] hover:to-[#0052CC] hover:text-white hover:border-transparent"
                             }`}
                           >
                             {selectedTime === slot ? (
                               <div className="flex">
-                                <div className="flex-1 py-3 px-4 bg-[#6B7280] text-white">
+                                <div className="flex-1 py-3.5 px-5 bg-[#64748B] text-white">
                                   {slot.start_time}
                                 </div>
                                 <button
                                   onClick={handleConfirmTime}
-                                  className="py-3 px-4 bg-[#0069FF] text-white font-semibold"
+                                  className="py-3.5 px-6 bg-gradient-to-r from-[#0069FF] to-[#0052CC] text-white font-bold hover:from-[#0052CC] hover:to-[#003D99] transition-all"
                                 >
                                   Next
                                 </button>
                               </div>
                             ) : (
-                              <div className="py-3 px-4">{slot.start_time}</div>
+                              <div className="py-3.5 px-5">{slot.start_time}</div>
                             )}
                           </button>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[14px] text-[#6B7280]">No available slots</p>
+                      <div className="text-center py-8">
+                        <div className="w-12 h-12 rounded-full bg-[#E8EEF4] mx-auto mb-3 flex items-center justify-center">
+                          <Clock className="w-6 h-6 text-[#9CA3AF]" />
+                        </div>
+                        <p className="text-[14px] text-[#6B7280]">No available slots for this date</p>
+                      </div>
                     )}
                   </>
                 ) : (
-                  <p className="text-[14px] text-[#6B7280]">Select a date to view available times</p>
+                  <div className="text-center py-12">
+                    <div className="w-14 h-14 rounded-full bg-[#E8EEF4] mx-auto mb-4 flex items-center justify-center">
+                      <Calendar className="w-7 h-7 text-[#9CA3AF]" />
+                    </div>
+                    <p className="text-[15px] text-[#6B7280] font-medium">Select a date to view available times</p>
+                  </div>
                 )}
               </div>
             </div>
