@@ -266,7 +266,7 @@ async def update_event_type(event_type_id: str, update_data: EventTypeUpdate):
 
 @router.delete("/{event_type_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_event_type(event_type_id: str):
-    """Delete an event type."""
+    """Delete an event type and all associated bookings."""
     user = await ensure_default_user(prisma)
     
     event_type = await prisma.eventtype.find_first(
@@ -276,6 +276,10 @@ async def delete_event_type(event_type_id: str):
     if not event_type:
         raise HTTPException(status_code=404, detail="Event type not found")
     
+    # First, delete all bookings associated with this event type
+    await prisma.booking.delete_many(where={"eventTypeId": event_type_id})
+    
+    # Now delete the event type
     await prisma.eventtype.delete(where={"id": event_type_id})
     return None
 
