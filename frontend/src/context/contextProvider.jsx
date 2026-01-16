@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 // --- API Client ---
 
@@ -136,6 +136,33 @@ export function ContextProvider({ children }) {
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [timeZone, setTimeZone] = useState("UTC");
+    const [user, setUser] = useState(null);
+    const [userLoading, setUserLoading] = useState(true);
+
+    // Auto-fetch user on mount - silently fail if backend unavailable
+    useEffect(() => {
+        let mounted = true;
+        const fetchUser = async () => {
+            try {
+                const userData = await api.getMe();
+                if (mounted && userData) {
+                    setUser(userData);
+                    if (userData.timezone) {
+                        setTimeZone(userData.timezone);
+                    }
+                }
+            } catch (err) {
+                // Silently handle error - backend may not be running
+                console.warn("Could not fetch user:", err?.message || err);
+            } finally {
+                if (mounted) {
+                    setUserLoading(false);
+                }
+            }
+        };
+        fetchUser();
+        return () => { mounted = false; };
+    }, []);
 
     const resetBooking = () => {
         setSelectedDate(null);
@@ -146,11 +173,14 @@ export function ContextProvider({ children }) {
         selectedDate,
         selectedSlot,
         timeZone,
+        user,
+        userLoading,
         setSelectedDate,
         setSelectedSlot,
         setTimeZone,
+        setUser,
         resetBooking,
-        api // Add api to the value
+        api
     };
 
     return (
