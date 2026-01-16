@@ -1,5 +1,6 @@
 """
 Minimal Vercel Serverless Function for Testing
+Vercel Python expects the app to be named 'app' (for ASGI) or 'handler' (for WSGI)
 """
 from fastapi import FastAPI
 
@@ -12,6 +13,3 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
-
-# Export for Vercel
-handler = app
