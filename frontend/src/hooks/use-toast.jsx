@@ -133,7 +133,7 @@ function toast({ ...props }) {
 }
 
 function useToast() {
-    const [state, setState] = React.useState < State > (memoryState);
+    const [state, setState] = React.useState(memoryState);
 
     React.useEffect(() => {
         listeners.push(setState);
@@ -152,4 +152,5 @@ function useToast() {
     };
 }
 
-export { useToast, toast };
+export { toast, useToast };
+
