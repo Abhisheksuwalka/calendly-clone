@@ -3,19 +3,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useContextProvider } from "@/context/contextProvider";
 import {
-  ArrowLeft,
-  Calendar,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Globe,
-  Loader2,
-  MapPin,
-  Phone,
-  Play,
-  Users,
-  Video,
+    ArrowLeft,
+    Calendar,
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Globe,
+    Loader2,
+    MapPin,
+    Phone,
+    Play,
+    Users,
+    Video,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -39,6 +39,7 @@ export default function BookingPage() {
   const [hostInfo, setHostInfo] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [bookingResult, setBookingResult] = useState(null);
+  const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -73,8 +74,10 @@ export default function BookingPage() {
   const fetchEventTypes = async () => {
     try {
       setLoading(true);
-      const data = await api.getEventTypes({ is_active: true });
-      setEventTypes(data.event_types || []);
+      const data = await api.getEventTypes();
+      // Filter to only show active event types (client-side since backend doesn't support filtering)
+      const activeEvents = (data.event_types || []).filter(et => et.is_active !== false);
+      setEventTypes(activeEvents);
       try {
         const userData = await api.getMe();
         setHostInfo({ name: userData.name, username: userData.username });
@@ -146,6 +149,7 @@ export default function BookingPage() {
           email: formData.email,
         },
         guests: [],
+        notes: formData.notes || undefined,
       });
       setBookingResult(result);
       setStep("confirmed");
@@ -459,12 +463,52 @@ export default function BookingPage() {
                 </div>
 
                 {/* Timezone */}
-                <div className="mt-5 pt-5 border-t border-[#E5E7EB]">
+                <div className="mt-5 pt-5 border-t border-[#E5E7EB] relative">
                   <p className="text-[12px] text-[#6B7280] mb-1">Time zone</p>
-                  <button className="text-[14px] text-[#1F2937] flex items-center gap-2 hover:text-[#0069FF]">
+                  <button 
+                    onClick={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
+                    className="text-[14px] text-[#1F2937] flex items-center gap-2 hover:text-[#0069FF]"
+                  >
                     <Globe className="w-4 h-4" />
                     {timeZone}
                   </button>
+                  {showTimezoneDropdown && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setShowTimezoneDropdown(false)}
+                      />
+                      <div className="absolute bottom-full left-0 mb-2 w-64 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
+                        {[
+                          { value: "America/New_York", label: "Eastern Time (ET)" },
+                          { value: "America/Chicago", label: "Central Time (CT)" },
+                          { value: "America/Denver", label: "Mountain Time (MT)" },
+                          { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+                          { value: "Europe/London", label: "London (GMT)" },
+                          { value: "Europe/Paris", label: "Paris (CET)" },
+                          { value: "Asia/Kolkata", label: "India (IST)" },
+                          { value: "Asia/Tokyo", label: "Tokyo (JST)" },
+                          { value: "Australia/Sydney", label: "Sydney (AEST)" },
+                        ].map((tz) => (
+                          <button
+                            key={tz.value}
+                            onClick={() => {
+                              setTimeZone(tz.value);
+                              setShowTimezoneDropdown(false);
+                              if (selectedDate) {
+                                fetchTimeSlots(selectedDate);
+                              }
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-[13px] hover:bg-[#F3F4F6] ${
+                              timeZone === tz.value ? "bg-[#E6F2FF] text-[#0069FF] font-medium" : "text-[#1F2937]"
+                            }`}
+                          >
+                            {tz.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
