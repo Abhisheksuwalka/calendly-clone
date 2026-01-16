@@ -154,6 +154,178 @@ function CopyToDaysModal({ isOpen, onClose, onCopy, sourceDayKey, currentSlots }
   );
 }
 
+// Date Override Modal Component (for setting specific hours on a date)
+function DateOverrideModal({ isOpen, onClose, onApply, initialDate }) {
+  const [selectedDate, setSelectedDate] = useState(initialDate || new Date());
+  const [currentMonth, setCurrentMonth] = useState(initialDate || new Date());
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("17:00");
+  const [saving, setSaving] = useState(false);
+
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const calendarStart = startOfWeek(monthStart);
+    const calendarEnd = endOfWeek(monthEnd);
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  }, [currentMonth]);
+
+  const handleApply = async () => {
+    if (!selectedDate) return;
+    setSaving(true);
+    try {
+      await onApply({
+        specific_date: format(selectedDate, "yyyy-MM-dd"),
+        intervals: [{ start_time: startTime, end_time: endTime }]
+      });
+      onClose();
+    } catch (err) {
+      console.error("Failed to save date override:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div 
+        className="modal-content" 
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: "420px", width: "90%" }}
+      >
+        {/* Header */}
+        <div className="p-6 pb-4">
+          <h2 className="text-[20px] font-bold text-[#1F2937] leading-tight">
+            Select the date(s) you want to<br />assign specific hours
+          </h2>
+        </div>
+
+        {/* Calendar */}
+        <div className="px-6 pb-4">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[16px] font-semibold text-[#1F2937]">
+              {format(currentMonth, "MMMM yyyy")}
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                className="w-8 h-8 flex items-center justify-center border border-[#D1D5DB] rounded-full hover:bg-[#F3F4F6]"
+              >
+                <ChevronLeft className="w-4 h-4 text-[#6B7280]" />
+              </button>
+              <button
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                className="w-8 h-8 flex items-center justify-center bg-[#0069FF] rounded-full hover:bg-[#0055CC]"
+              >
+                <ChevronRight className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          </div>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(day => (
+              <div key={day} className="text-center text-[11px] font-semibold text-[#6B7280] py-1">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((date, idx) => {
+              const inCurrentMonth = isSameMonth(date, currentMonth);
+              const isSelected = selectedDate && format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
+              const isCurrentDay = isToday(date);
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => inCurrentMonth && setSelectedDate(date)}
+                  disabled={!inCurrentMonth}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-medium transition-all ${
+                    !inCurrentMonth
+                      ? "text-[#D1D5DB] cursor-default"
+                      : isSelected
+                      ? "bg-[#0069FF] text-white"
+                      : isCurrentDay
+                      ? "bg-[#E6F2FF] text-[#0069FF] border border-[#0069FF]"
+                      : "text-[#1F2937] hover:bg-[#F3F4F6]"
+                  }`}
+                >
+                  {format(date, "d")}
+                  {isCurrentDay && !isSelected && (
+                    <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#0069FF]" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Time inputs */}
+        <div className="px-6 pb-6">
+          <p className="text-[16px] font-semibold text-[#1F2937] mb-3">
+            What hours are you available?
+          </p>
+          <div className="flex items-center gap-3">
+            <Select value={startTime} onValueChange={setStartTime}>
+              <SelectTrigger className="w-[120px] h-10 border-[#D1D5DB] rounded-lg">
+                <SelectValue placeholder="Start" />
+              </SelectTrigger>
+              <SelectContent>
+                {timeOptions.map(time => (
+                  <SelectItem key={time} value={time}>
+                    {formatTime(time)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-[14px] text-[#6B7280]">-</span>
+            <Select value={endTime} onValueChange={setEndTime}>
+              <SelectTrigger className="w-[120px] h-10 border-[#D1D5DB] rounded-lg">
+                <SelectValue placeholder="End" />
+              </SelectTrigger>
+              <SelectContent>
+                {timeOptions.map(time => (
+                  <SelectItem key={time} value={time}>
+                    {formatTime(time)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <button className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:text-red-500">
+              <X className="w-5 h-5" />
+            </button>
+            <button className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:text-[#0069FF]">
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-[#E5E7EB] flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 text-[14px] font-semibold text-[#374151] bg-white border border-[#D1D5DB] rounded-full hover:bg-[#F9FAFB] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleApply}
+            disabled={saving || !selectedDate}
+            className="px-6 py-2.5 text-[14px] font-semibold text-white bg-[#0069FF] rounded-full hover:bg-[#0055CC] transition-colors disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Calendar View Component
 function CalendarView({ schedule, onDateClick }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -251,6 +423,7 @@ export default function Availability() {
   const [scheduleDropdownOpen, setScheduleDropdownOpen] = useState(false);
   const [copyModal, setCopyModal] = useState({ isOpen: false, dayKey: null, slots: [] });
   const [isDirty, setIsDirty] = useState(false);
+  const [dateOverrideModal, setDateOverrideModal] = useState({ isOpen: false, date: null });
 
   useEffect(() => {
     fetchSchedule();
@@ -673,7 +846,7 @@ export default function Availability() {
               {currentView === "calendar" && (
                 <CalendarView
                   schedule={schedule}
-                  onDateClick={(date) => toast.info(`Clicked ${format(date, "MMMM d, yyyy")}`)}
+                  onDateClick={(date) => setDateOverrideModal({ isOpen: true, date })}
                 />
               )}
             </div>
@@ -719,6 +892,18 @@ export default function Availability() {
         onCopy={copyToOtherDays}
         sourceDayKey={copyModal.dayKey}
         currentSlots={copyModal.slots}
+      />
+
+      {/* Date Override Modal */}
+      <DateOverrideModal
+        isOpen={dateOverrideModal.isOpen}
+        onClose={() => setDateOverrideModal({ isOpen: false, date: null })}
+        initialDate={dateOverrideModal.date}
+        onApply={async (overrideData) => {
+          await api.addDateOverride(overrideData);
+          toast.success("Date override saved!");
+          fetchSchedule();
+        }}
       />
     </DashboardLayout>
   );
